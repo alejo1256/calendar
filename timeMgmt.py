@@ -1,4 +1,5 @@
 from __future__ import print_function
+from ast import arg
 
 import datetime
 import os.path
@@ -46,6 +47,9 @@ def main():
         addEvent(creds, duration, description)
     if argv[1] == 'commit':
         commitHours(creds)
+    
+    if argv[1] == 'get':
+        getEvents(creds)
     
 
 def commitHours(creds):
@@ -121,6 +125,34 @@ def addEvent(creds, duration, description):
     service = build('calendar', 'v3', credentials=creds)
     event = service.events().insert(calendarId='jqtn2lr40s4bdld3fngv9nrjno@group.calendar.google.com', body=event).execute()
     print('Event created: %s' % (event.get('htmlLink')))
+
+
+def getEvents(creds):
+
+    try:
+        service = build('calendar', 'v3', credentials=creds)
+
+        # Call the Calendar API
+        now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
+        print('Getting the upcoming 10 events')
+        events_result = service.events().list(calendarId='primary', timeMin=now,
+                                              maxResults=10, singleEvents=True,
+                                              orderBy='startTime').execute()
+        events = events_result.get('items', [])
+
+        if not events:
+            print('No upcoming events found.')
+            return
+
+        # Prints the start and name of the next 10 events
+        for event in events:
+            start = event['start'].get('dateTime', event['start'].get('date'))
+            print(start, event['summary'])
+
+    except HttpError as error:
+        print('An error occurred: %s' % error)
+
+
 
 
 if __name__ == '__main__':
