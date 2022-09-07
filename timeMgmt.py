@@ -44,12 +44,14 @@ def main():
     if argv[1] == 'add':
         duration = argv[2]
         description = argv[3]
-        addEvent(creds, duration, description)
+        calendar_name = argv[4]
+        addEvent(creds, duration, description, calendar_name)
     if argv[1] == 'commit':
         commitHours(creds)
     
     if argv[1] == 'get':
-        getEvents(creds)
+        calendar_name = argv[2]
+        getEvents(creds, calendar_name)
     
 
 def commitHours(creds):
@@ -103,9 +105,14 @@ def commitHours(creds):
         print('An error occurred: %s' % error)
 
 
-def addEvent(creds, duration, description):
-    start = datetime.datetime.utcnow()
+def addEvent(creds, duration, description, calendar_name):
+    if calendar_name == 'Python':
+        calendar_id = 'jqtn2lr40s4bdld3fngv9nrjno@group.calendar.google.com'
+    else:
+        calendar_id = 'primary'
 
+
+    start = datetime.datetime.utcnow()
     end = datetime.datetime.utcnow() + datetime.timedelta(hours=int(duration))
     start_formatted = start.isoformat() + 'Z'
     end_formatted = end.isoformat() + 'Z'
@@ -123,11 +130,16 @@ def addEvent(creds, duration, description):
     }
 
     service = build('calendar', 'v3', credentials=creds)
-    event = service.events().insert(calendarId='jqtn2lr40s4bdld3fngv9nrjno@group.calendar.google.com', body=event).execute()
+    event = service.events().insert(calendarId=calendar_id, body=event).execute()
     print('Event created: %s' % (event.get('htmlLink')))
 
 
-def getEvents(creds):
+def getEvents(creds, calendar_name):
+
+    if calendar_name == 'Python':
+        calendar_id = 'jqtn2lr40s4bdld3fngv9nrjno@group.calendar.google.com'
+    else:
+        calendar_id = 'primary'
 
     try:
         service = build('calendar', 'v3', credentials=creds)
@@ -135,7 +147,7 @@ def getEvents(creds):
         # Call the Calendar API
         now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
         print('Getting the upcoming 10 events')
-        events_result = service.events().list(calendarId='primary', timeMin=now,
+        events_result = service.events().list(calendarId=calendar_id, timeMin=now,
                                               maxResults=10, singleEvents=True,
                                               orderBy='startTime').execute()
         events = events_result.get('items', [])
